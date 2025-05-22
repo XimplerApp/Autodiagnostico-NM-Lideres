@@ -1,0 +1,471 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autodiagnóstico para Líderes - Nómina Muerta</title>
+
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      background-image: url('marca_agua_nomina_muerta_transparente.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: center;
+      background-attachment: fixed;
+      background-color: #ffffff;
+    }
+
+    h2, h3 { color: #003366; }
+
+    .question { margin-bottom: 25px; }
+    .question p { font-weight: bold; }
+
+    .question label {
+      display: block;
+      font-size: 1rem;
+      margin: 6px 0;
+      line-height: 1.4;
+    }
+
+    input[type="text"], input[type="email"], button {
+      width: 100%;
+      font-size: 1rem;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #003366;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005599;
+    }
+
+    .total, .team-average {
+      font-weight: bold;
+      margin-top: 20px;
+      white-space: pre-line;
+      font-size: 1.1rem;
+    }
+
+    #focusDefinition, #focusScoresTable {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0px 0px 6px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table th, table td {
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 10px;
+        background-size: 180px;
+        background-position: top center;
+        background-attachment: scroll;
+        font-size: 1rem;
+      }
+
+      .question p {
+        font-size: 1rem;
+      }
+
+      .question label, input, button {
+        font-size: 1rem;
+      }
+
+      table {
+        font-size: 0.9rem;
+      }
+    }
+</style>
+
+</head>
+<body>
+<h2>Autodiagnóstico Estratégico para Líderes — Nómina Muerta</h2>
+<div style="margin: 30px auto; max-width: 600px; text-align: left; padding: 20px; border: 1px solid #ccc; background: #f9f9f9;">
+<h3 style="color: #003366;">Información del Diagnóstico</h3>
+<label>Nombre: <input id="nombre" style="width: 100%; margin-bottom: 10px;" type="text"/></label>
+<label>Área o departamento: <input id="area" style="width: 100%; margin-bottom: 10px;" type="text"/></label>
+<label>Plaza o ubicación: <input id="plaza" style="width: 100%; margin-bottom: 10px;" type="text"/></label>
+<label>Correo electrónico: <input id="correo" style="width: 100%; margin-bottom: 10px;" type="email"/></label>
+<p><strong>Fecha y hora del diagnóstico:</strong> <span id="fechaHora"></span></p>
+</div>
+<script>
+  const fecha = new Date();
+  const f = fecha.toLocaleString();
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("fechaHora").textContent = f;
+  });
+</script>
+<p>Instrucciones: Selecciona una opción por cada pregunta según la realidad de tu equipo. Las respuestas están diseñadas para identificar distintos niveles de riesgo operativo y posibles focos de nómina muerta. Sé lo más objetivo posible. Al finalizar, obtendrás una interpretación de resultados por puntaje individual y grupal.</p>
+<form id="diagnosticForm">
+<div id="questions"></div>
+<button onclick="calculateScore()" type="button">Calcular Puntaje</button>
+<p class="total" id="totalScore"></p>
+<hr/>
+
+<div class="total" id="suggestedFocus"></div></form><div id="focusDefinition" style="margin-top: 20px; display: none;"><h3>¿Qué significa cada foco de intervención sugerido?</h3><p>🔹 Flujo operativo ineficiente: Problemas con trámites lentos, aprobaciones manuales, duplicación de trabajo o tareas repetitivas sin valor.</p><p>🔹 Comunicación dispersa: Mensajes importantes perdidos entre correos, grupos, llamadas sin seguimiento o falta de canal centralizado.</p><p>🔹 Supervisión débil: Falta de visibilidad del avance, seguimientos por intuición y múltiples correcciones por ambigüedad.</p><p>🔹 Desalineación estratégica: Tareas que ya no tienen sentido, indicadores irrelevantes o uso de procesos antiguos sin reentrenamiento.</p><p>🔹 Desgaste cognitivo: Sobrecarga mental, interrupciones constantes, fragmentación operativa y sensación de ocupación sin avance real.</p></div>
+<div id="focusScoresTable" style="margin-top: 40px; display: none;">
+<h3>Resumen de Puntaje Negativo por Foco</h3>
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: left;">
+<thead style="background-color: #f2f2f2;">
+<tr>
+<th>Foco de Intervención</th>
+<th>Puntaje Total Negativo</th>
+<th>Indicadores Clave</th>
+</tr>
+</thead>
+<tbody id="focusTableBody">
+</tbody>
+</table>
+</div>
+
+
+<script>
+    const questions = [
+      {
+        text: "¿Qué tan frecuente es la sobrecarga operativa por desorganización?",
+        options: [
+          "Rara vez me siento saturado.",
+          "Algunas veces me abruma el volumen de temas abiertos.",
+          "Muchas veces estoy mentalmente agotado por fragmentación.",
+          "Vivo con estrés operativo constante sin lograr resultados claros."
+        ]
+      },
+      {
+        text: "¿Con qué frecuencia se repiten tareas o validaciones por doble cadena de mando?",
+        options: [
+          "Nunca.",
+          "Ocasionalmente.",
+          "Con frecuencia.",
+          "Todo el tiempo."
+        ]
+      },
+      {
+        text: "¿Qué tan alineadas están las actividades con los objetivos actuales?",
+        options: [
+          "Totalmente alineadas.",
+          "Alineadas en general, con algunos rezagos.",
+          "Muchas tareas ya no tienen sentido, pero siguen activas.",
+          "Nadie tiene claridad de si lo que hace sigue siendo prioridad."
+        ]
+      },
+      {
+        text: "¿Cómo es el seguimiento entre áreas en procesos compartidos?",
+        options: [
+          "Trazabilidad total: usamos tableros o sistemas visibles.",
+          "A veces se actualiza el estatus, pero no siempre.",
+          "Solo se da seguimiento si alguien insiste.",
+          "No hay forma clara de saber qué pasó con lo que se envió."
+        ]
+      },
+      {
+        text: "¿Cuántos procesos siguen dependiendo de firmas físicas o aprobaciones manuales?",
+        options: [
+          "Ninguno.",
+          "Algunos casos excepcionales.",
+          "Muchos trámites internos.",
+          "Casi todos los flujos."
+        ]
+      },
+      {
+        text: "¿Tenemos visibilidad sobre tareas en curso, estancadas o innecesarias?",
+        options: [
+          "Total: usamos tableros o sistemas que lo muestran en tiempo real.",
+          "Parcial: sabemos lo general, pero no en detalle ni por persona.",
+          "Mínima: solo reaccionamos cuando hay retrasos o problemas.",
+          "Nula: no hay forma clara de saberlo."
+        ]
+      },
+      {
+        text: "¿Cuántas actividades se hacen solo por inercia o tradición?",
+        options: [
+          "Casi ninguna: lo cuestionamos constantemente.",
+          "Algunas: las detectamos, pero cuesta eliminarlas.",
+          "Muchas: sabemos que existen, pero nadie las toca.",
+          "La mayoría: no hay revisión crítica real de procesos."
+        ]
+      },
+      {
+        text: "¿Qué tanto tiempo del equipo se va en tareas urgentes sin impacto?",
+        options: [
+          "<10%: trabajamos por prioridades reales.",
+          "10-30%: lo reconocemos y lo estamos corrigiendo.",
+          "30-50%: hay demasiada reacción y poca planeación.",
+          ">50%: estamos en modo “apagafuegos” constante."
+        ]
+      },
+      {
+        text: "¿Cuántas juntas podrían reemplazarse por un mensaje o decisión directa?",
+        options: [
+          "<10%: nuestras juntas son breves y resolutivas.",
+          "10-30%: algunas se alargan sin sentido.",
+          "30-50%: varias se hacen por costumbre.",
+          ">50%: nos reunimos mucho… pero resolvemos poco."
+        ]
+      },
+      {
+        text: "¿Qué tanto retrabajo o errores se podrían evitar con procesos claros?",
+        options: [
+          "Casi nada: nuestros procesos están bien definidos y documentados.",
+          "Algunos: hay ambigüedades que provocan fallas.",
+          "Muchos: falta claridad y se improvisa demasiado.",
+          "La mayoría: no hay procesos claros ni consistentes."
+        ]
+      },
+      {
+        text: "¿Qué tan claro es lo que se espera de cada persona en términos de impacto?",
+        options: [
+          "Muy claro: cada quien conoce su aporte estratégico.",
+          "Medianamente claro: sabemos qué hacer, pero no por qué.",
+          "Poco claro: ejecutamos sin saber el impacto real.",
+          "Nada claro: todos hacen lo suyo, pero sin dirección común."
+        ]
+      },
+      {
+        text: "¿Cuántos proyectos siguen activos aunque ya no generan valor?",
+        options: [
+          "Ninguno: hacemos revisiones periódicas.",
+          "Pocos: los cuestionamos, pero cuesta cerrarlos.",
+          "Varios: se mantienen por compromiso político o miedo al cambio.",
+          "Muchos: no cerramos nada aunque ya no sirva."
+        ]
+      },
+      {
+        text: "¿A quién se reconoce más: al que resuelve caos o al que lo previene?",
+        options: [
+          "Al que previene: valoramos la anticipación y el diseño.",
+          "A ambos por igual: hay equilibrio.",
+          "Al que resuelve: se premia la reacción visible.",
+          "Solo al que apaga fuegos: la prevención pasa desapercibida."
+        ]
+      },
+      {
+        text: "¿Qué tanto talento de alto nivel está ocupado en tareas operativas de bajo valor?",
+        options: [
+          "Casi nada: el talento está enfocado en generar valor estratégico.",
+          "Algunas funciones: estamos migrando responsabilidades.",
+          "Muchas personas: el potencial está desperdiciado.",
+          "La mayoría: usamos mal el tiempo del mejor talento."
+        ]
+      },
+      {
+        text: "¿Tenemos mecanismos mensuales para detectar y reducir Nómina Muerta?",
+        options: [
+          "Sí: forma parte de nuestra operación continua.",
+          "A veces: lo hacemos si alguien lo propone.",
+          "Rara vez: solo si hay una crisis.",
+          "Nunca: no hay un sistema ni cultura de prevención."
+        ]
+      }
+    ,
+{
+text: "¿Qué tanto tiempo del equipo se invierte en tareas que no deberían existir?",
+options: [
+"Nunca lo hemos cuestionado",
+"Sospechamos de algunas, pero nadie las elimina",
+"Se detectan algunas, pero siguen en curso",
+"Revisamos y eliminamos tareas sin impacto cada semana"
+]
+},
+{
+text: "¿Qué tan definidos están los entregables antes de ejecutar una tarea?",
+options: [
+"Casi nunca. Las instrucciones son vagas",
+"Hay objetivos, pero no entregables claros",
+"Entendemos lo esperado, pero cambia al avanzar",
+"Cada tarea parte con un entregable definido y validable"
+]
+},
+{
+text: "¿Qué tan común es repetir tareas o procesos que ya se habían hecho?",
+options: [
+"Todo el tiempo. Nadie sabe qué se ha hecho",
+"Frecuente: por falta de trazabilidad o duplicación",
+"A veces, pero se detecta a tiempo",
+"Rara vez sucede, tenemos trazabilidad operativa"
+]
+},
+{
+text: "¿Qué tan visible es el estatus real de una tarea sin necesidad de preguntar?",
+options: [
+"No es visible. Hay que preguntar a cada persona",
+"Más o menos, si el equipo está disponible",
+"Hay formas de verlo, pero no en tiempo real",
+"Todo es visible en tableros compartidos con trazabilidad"
+]
+},
+{
+text: "¿Quién da seguimiento para verificar que lo que pidió… sí se hizo?",
+options: [
+"Nadie. Si no lo mencionan, se asume hecho",
+"Solo si hay problemas o retrasos",
+"El líder lo revisa informalmente",
+"El sistema exige validación del solicitante"
+]
+}];
+
+    const formContainer = document.getElementById("questions");
+    questions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      const title = document.createElement("p");
+      title.textContent = `${i + 1}. ${q.text}`;
+      div.appendChild(title);
+      q.options.forEach((opt, j) => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type='radio' name='q${i}' value='${j + 1}'> ${opt}`;
+        div.appendChild(label);
+      });
+      formContainer.appendChild(div);
+    });
+
+    function calculateScore() {
+      let total = 0;
+      for (let i = 0; i < questions.length; i++) {
+        const selected = document.querySelector(`input[name='q${i}']:checked`);
+        if (selected) {
+          total += parseInt(selected.value);
+        }
+      }
+
+      let interpretation = "";
+      if (total <= 20) {
+        interpretation = "Nivel Excelente: Tu equipo tiene muy bajo riesgo de nómina muerta (<10%). Hay madurez operativa, claridad en tareas y mínima fricción entre áreas.";
+      } else if (total <= 30) {
+        interpretation = "Nivel Bueno: Riesgo moderado de nómina muerta (10–20%). Hay áreas para mejorar visibilidad, trazabilidad o alineación de objetivos.";
+      } else if (total <= 40) {
+        interpretation = "Nivel de Riesgo Medio: Se detectan ineficiencias frecuentes (20–30% de nómina muerta). Se recomienda una revisión integral de procesos y sistemas de coordinación.";
+      } else if (total <= 50) {
+        interpretation = "Nivel Crítico: El equipo opera con múltiples síntomas de inercia, fragmentación y desalineación (30–40% de nómina muerta). Urge rediseño estructural y claridad de impacto.";
+      } else {
+        interpretation = "Nivel Muy Alto: Altísima presencia de nómina muerta (>40%). Requiere intervención de liderazgo, rediseño de flujos clave y depuración urgente de prácticas ineficientes.";
+      }
+      if (total <= 14) {
+        interpretation = "Nivel Excelente: Tu equipo tiene alta eficiencia operativa y una cultura de prevención activa. Estimación de Nómina Muerta: <10%. Mantengan sus mecanismos de revisión y mejora continua.";
+      } else if (total <= 22) {
+        interpretation = "Nivel Bueno: Hay conciencia operativa y buen control. Estimación de Nómina Muerta: entre 10% y 20%. Aún así, explora ajustes finos para reducir retrabajo, reuniones innecesarias o tareas sin impacto.";
+      } else if (total <= 28) {
+        interpretation = "Nivel Moderado: Se detectan focos de nómina muerta. Estimación de Nómina Muerta: entre 20% y 30%. Trabaja en mejorar la visibilidad, claridad de prioridades y eliminar procesos inertes.";
+      } else if (total <= 34) {
+        interpretation = "Nivel Crítico: La operación presenta síntomas estructurales de ineficiencia. Estimación de Nómina Muerta: entre 30% y 40%. Se recomienda rediseñar procesos clave, reducir carga inútil y establecer métricas de impacto.";
+      } else {
+        interpretation = "Nivel de Riesgo Muy Alto: Alto grado de nómina muerta. Estimación de Nómina Muerta: >40%. Urge rediseñar prioridades, revisar roles, eliminar tareas sin valor y generar un sistema de seguimiento eficaz.";
+      }
+
+      const scoreMsg = `Tu puntaje total es: ${total}\n${interpretation}`;
+      document.getElementById("totalScore").textContent = scoreMsg;
+      const focusMap = {
+  'Flujo operativo ineficiente': [0, 4, 5, 7, 17],
+  'Comunicación dispersa': [8],
+  'Supervisión débil': [6, 9, 13, 15, 18, 19],
+  'Desalineación estratégica': [2, 11, 12, 16],
+  'Desgaste cognitivo': [1, 3, 10]
+      };
+      const focusScores = {
+        'Flujo operativo ineficiente': 0,
+        'Comunicación dispersa': 0,
+        'Supervisión débil': 0,
+        'Desalineación estratégica': 0,
+        'Desgaste cognitivo': 0
+      };
+      for (let [focus, indexes] of Object.entries(focusMap)) {
+        indexes.forEach(i => {
+          const sel = document.querySelector(`input[name='q${i}']:checked`);
+          if (sel) focusScores[focus] += parseInt(sel.value);
+        });
+      }
+      const sortedFocos = Object.entries(focusScores).sort((a, b) => b[1] - a[1]);
+      const topFocos = sortedFocos.filter(f => f[1] >= 6).map(f => f[0]);
+      const focusText = topFocos.length
+        ? `🔍 Foco(s) de intervención sugerido(s): ${topFocos.join(', ')}.`
+        : 'No se detectó un foco dominante.';
+      document.getElementById("suggestedFocus").textContent = focusText;
+      document.getElementById("focusDefinition").style.display = 'block';
+
+      const maxScores = {
+        'Flujo operativo ineficiente': 20,
+        'Comunicación dispersa': 4,
+        'Supervisión débil': 24,
+        'Desalineación estratégica': 16,
+        'Desgaste cognitivo': 12
+      };
+
+      const indicadores = {
+        'Flujo operativo ineficiente': 'Duplicación, trámites manuales, tareas innecesarias',
+        'Comunicación dispersa': 'Falta de centralización y pérdida de mensajes',
+        'Supervisión débil': 'Falta de visibilidad, seguimiento o validación de tareas',
+        'Desalineación estratégica': 'Tareas desconectadas de metas, entregables vagos',
+        'Desgaste cognitivo': 'Saturación, multitarea, confusión mental'
+      };
+
+      const tbody = document.getElementById("focusTableBody");
+      tbody.innerHTML = "";
+      sortedFocos.forEach(([foco, puntaje]) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${foco}</td>
+          <td>${puntaje}/ ${maxScores[foco]}</td>
+          <td>${indicadores[foco]}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      document.getElementById("focusScoresTable").style.display = 'block';
+
+
+    }
+
+    function calculateTeamAverage() {
+      const raw = document.getElementById("teamScores").value;
+      if (!raw) return;
+      const scores = raw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const sum = scores.reduce((a, b) => a + b, 0);
+      const avg = (sum / scores.length).toFixed(2);
+      
+      let teamInterpretation = "";
+      const avgNum = parseFloat(avg);
+      if (avgNum <= 14) {
+        teamInterpretation = "Nivel Excelente: El equipo tiene alta eficiencia operativa. Nómina Muerta estimada: <10%. Mantengan visibilidad y mejora continua.";
+      } else if (avgNum <= 22) {
+        teamInterpretation = "Nivel Bueno: Buena ejecución, pero con oportunidades de mejora en seguimiento, roles o procesos. Nómina Muerta estimada: 10–20%.";
+      } else if (avgNum <= 28) {
+        teamInterpretation = "Nivel Moderado: Existen focos de ineficiencia. Se recomienda priorizar claridad en impacto, evitar retrabajo y simplificar tareas. Nómina Muerta estimada: 20–30%.";
+      } else if (avgNum <= 34) {
+        teamInterpretation = "Nivel Crítico: Falta enfoque y diseño organizacional. Requiere rediseño de procesos, métricas de valor y depuración de actividades inútiles. Nómina Muerta estimada: 30–40%.";
+      } else {
+        teamInterpretation = "Nivel Muy Alto: Alto grado de nómina muerta estructural. Revisión profunda de cultura operativa, estructura y sistema de prioridades. Nómina Muerta estimada: >40%.";
+      }
+      document.getElementById("teamAverage").textContent = `Promedio del equipo: ${avg} puntos\n${teamInterpretation}`;
+    
+    }
+  </script>
+<div style="text-align: center; margin-top: 40px;">
+<button onclick="window.print()" style="padding: 10px 20px; font-size: 1rem;">📄 Exportar o Imprimir como PDF</button>
+</div>
+</body>
+</html>
